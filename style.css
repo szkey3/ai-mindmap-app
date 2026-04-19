@@ -41,7 +41,7 @@ body {
 
 /* Header / Toolbar */
 header {
-    position: absolute;
+    position: fixed;
     top: 1rem;
     left: 1rem;
     right: 1rem;
@@ -398,7 +398,7 @@ button {
 
 /* Sidebar Styles */
 #sidebar {
-    position: absolute;
+    position: fixed;
     top: 80px; /* Below header */
     left: 1rem;
     bottom: 1rem;
