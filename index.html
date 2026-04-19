@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Mind Mapper</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* CSS reset & base within file to avoid 404 momentarily, but we will move to style.css */
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- ツールバー -->
+        <header class="glass-panel">
+            <div class="logo">
+                <button id="btn-toggle-sidebar" class="icon-btn" title="メニュー">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                <span>AI Mind Mapper</span>
+            </div>
+            <div class="toolbar-actions">
+                <button id="btn-export" class="primary-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    プロンプト出力
+                </button>
+                <button id="btn-settings" class="icon-btn" title="設定">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- サイドバー -->
+        <aside id="sidebar" class="glass-panel hidden-sidebar">
+            <div class="sidebar-header">
+                <h2>保存済みマップ</h2>
+                <button id="btn-new-map" class="primary-btn" title="新しいマップを作成">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
+            </div>
+            <ul id="map-list" class="map-list">
+                <!-- Javascript will inject list items here -->
+            </ul>
+        </aside>
+
+        <!-- マインドマップキャンバス -->
+        <div id="canvas-container">
+            <!-- SVG エッジ描画領域 -->
+            <svg id="edges-layer" width="100%" height="100%"></svg>
+            <!-- HTML ノード描画領域 -->
+            <div id="nodes-layer"></div>
+            
+            <!-- ノードのコントロールメニュー（選択時表示） -->
+            <div id="node-controls" class="hidden glass-panel">
+                <button id="btn-add-node" title="子ノードを追加">+</button>
+                <button id="btn-ai-generate" class="ai-glow" title="AIでアイディア展開">✨</button>
+                <button id="btn-edit-node" title="編集">✏️</button>
+                <button id="btn-delete-node" class="danger" title="削除">🗑️</button>
+            </div>
+        </div>
+
+        <!-- ローディングオーバーレイ -->
+        <div id="ai-loading" class="hidden">
+            <div class="spinner"></div>
+            <span>AIがアイディアを展開中...</span>
+        </div>
+
+        <!-- 設定モーダル -->
+        <div id="modal-settings" class="modal hidden">
+            <div class="modal-content glass-panel">
+                <div class="modal-header">
+                    <h2>設定</h2>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="api-key">Gemini API Key</label>
+                        <input type="password" id="api-key" placeholder="AI-...">
+                        <small>APIキーはブラウザのLocalStorageにのみ保存されます。</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="btn-save-settings" class="primary-btn">保存</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- プロンプト出力モーダル -->
+        <div id="modal-export" class="modal hidden">
+            <div class="modal-content glass-panel">
+                <div class="modal-header">
+                    <h2>AI用プロンプト出力</h2>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>構築したマインドマップを元に生成されたプロンプトです。</p>
+                    <textarea id="export-textarea" rows="10" readonly></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button id="btn-copy-prompt" class="primary-btn">クリップボードにコピー</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
