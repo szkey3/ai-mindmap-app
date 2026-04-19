@@ -117,6 +117,7 @@ button {
     width: 100vw;
     height: 100vh;
     cursor: grab;
+    touch-action: none;
 }
 
 #canvas-container:active {

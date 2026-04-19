@@ -262,6 +262,12 @@ function renderNodes() {
             startDraggingNode(e, node.id);
         });
 
+        div.addEventListener('touchstart', (e) => {
+            e.stopPropagation();
+            selectNode(node.id);
+            startDraggingNode(e.touches[0], node.id);
+        }, { passive: false });
+
         div.addEventListener('dblclick', (e) => {
             e.stopPropagation();
             enableEditMode(node.id, div);
@@ -342,6 +348,16 @@ let draggingNodeId = null;
 let startDragX = 0, startDragY = 0;
 let originalNodeX = 0, originalNodeY = 0;
 
+// Touch & Pinch constraints
+let initialPinchDist = null;
+let initialScale = 1;
+
+function getPinchDistance(touches) {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+}
+
 function setupEvents() {
     // Sidebar toggle
     document.getElementById('btn-toggle-sidebar').addEventListener('click', () => {
@@ -381,6 +397,71 @@ function setupEvents() {
         isPanning = false;
         draggingNodeId = null;
     });
+
+    // --- Touch Events for Mobile ---
+    canvasContainer.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+            initialPinchDist = getPinchDistance(e.touches);
+            initialScale = state.transform.scale;
+            return;
+        }
+        if (e.target.closest('#node-controls') || e.target.closest('.mindmap-node') || e.target.closest('#sidebar')) return;
+        isPanning = true;
+        const touch = e.touches[0];
+        startPanX = touch.clientX - state.transform.x;
+        startPanY = touch.clientY - state.transform.y;
+        selectNode(null);
+    }, { passive: false });
+
+    window.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 2 && initialPinchDist) {
+            e.preventDefault(); // Prevent browser zoom/scroll
+            const currentDist = getPinchDistance(e.touches);
+            const zoomIntensity = currentDist / initialPinchDist;
+            let newScale = initialScale * zoomIntensity;
+            newScale = Math.min(Math.max(0.2, newScale), 3);
+            
+            const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+            const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            
+            const zoomTarget = {
+                x: (centerX - state.transform.x) / state.transform.scale,
+                y: (centerY - state.transform.y) / state.transform.scale
+            };
+
+            state.transform.x = centerX - zoomTarget.x * newScale;
+            state.transform.y = centerY - zoomTarget.y * newScale;
+            state.transform.scale = newScale;
+            render();
+            return;
+        }
+
+        if (isPanning) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            state.transform.x = touch.clientX - startPanX;
+            state.transform.y = touch.clientY - startPanY;
+            renderEdges();
+        } else if (draggingNodeId) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const dx = (touch.clientX - startDragX) / state.transform.scale;
+            const dy = (touch.clientY - startDragY) / state.transform.scale;
+            state.nodes[draggingNodeId].x = originalNodeX + dx;
+            state.nodes[draggingNodeId].y = originalNodeY + dy;
+            render();
+        }
+    }, { passive: false });
+
+    window.addEventListener('touchend', () => {
+        initialPinchDist = null;
+        if (isPanning || draggingNodeId) {
+            triggerAutoSave();
+        }
+        isPanning = false;
+        draggingNodeId = null;
+    });
+    // -------------------------------
 
     window.addEventListener('wheel', (e) => {
         if (e.target.closest('.modal') || e.target.closest('#sidebar')) return;
